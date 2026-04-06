@@ -20,6 +20,12 @@ class AppointmentController extends Controller
 
 return view('appointments.index', compact('appointments'));
     }
+public function indexSimple()
+{
+    $appointments = $this->appointmentService->getSimple();
+
+    return view('appointments.index', compact('appointments'));
+}
 
     public function store(Request $request)
     {

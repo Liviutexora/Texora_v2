@@ -59,5 +59,9 @@ public function getAll()
 {
     return \App\Models\Appointment::latest()->get();
 }
+public function getSimple()
+{
+    return \App\Models\Appointment::latest()->take(20)->get();
+}
 
 }

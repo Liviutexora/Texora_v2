@@ -59,3 +59,11 @@ Route::view('/reminders', 'placeholder')->name('reminders');
 Route::view('/calendar', 'placeholder')->name('calendar.index');
 
 Route::get('/slots', [AppointmentController::class, 'getSlots']);
+
+Route::prefix('advanced')->middleware('auth')->group(function () {
+    Route::get('/appointments', [App\Http\Controllers\AppointmentController::class, 'index']);
+});
+
+Route::prefix('simple')->middleware('auth')->group(function () {
+    Route::get('/appointments', [App\Http\Controllers\AppointmentController::class, 'indexSimple']);
+});
