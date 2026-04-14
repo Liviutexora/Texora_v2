@@ -26,4 +26,12 @@ class Employee extends Model
     {
         return $this->first_name . ' ' . $this->last_name;
     }
+    protected static function booted()
+{
+    static::addGlobalScope('business', function ($query) {
+        if (auth()->check()) {
+            $query->where('business_id', auth()->user()->business_id);
+        }
+    });
+}
 }

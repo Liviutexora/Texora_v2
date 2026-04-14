@@ -29,6 +29,7 @@ return view('appointments.index', compact('appointments'));
             'service' => 'nullable',
             'notes' => 'nullable',
         ]);
+        $data['business_id'] = auth()->user()->business_id;
 
         $this->appointmentService->create($data);
 

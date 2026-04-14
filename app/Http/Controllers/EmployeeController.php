@@ -26,7 +26,7 @@ class EmployeeController extends Controller
     // STORE
     public function store(Request $request)
     {
-        $businessId = Auth::user()->business_id;
+    $businessId = Auth::user()->business_id;
 
         $employee = Employee::create([
             'business_id' => $businessId,
@@ -48,7 +48,10 @@ class EmployeeController extends Controller
     // DELETE
     public function destroy($id)
     {
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::where('id', $id)
+    ->where('business_id', auth()->user()->business_id)
+    ->firstOrFail();
+
         $employee->delete();
 
         return redirect()->back()->with('success', 'Șters');

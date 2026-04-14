@@ -19,4 +19,12 @@ class Appointment extends Model
     {
         return $this->belongsTo(Business::class);
     }
+    protected static function booted()
+{
+    static::addGlobalScope('business', function ($query) {
+        if (auth()->check()) {
+            $query->where('business_id', auth()->user()->business_id);
+        }
+    });
+}
 }

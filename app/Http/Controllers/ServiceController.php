@@ -9,7 +9,7 @@ class ServiceController extends Controller
 {
     public function index()
     {
-        $services = Service::where('business_id', auth()->user()->business_id)->get();
+        $services = Service::all();
 
         return view('services.index', compact('services'));
     }
