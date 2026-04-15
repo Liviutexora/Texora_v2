@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
@@ -53,4 +54,47 @@ class EmployeeController extends Controller
 
         return redirect()->back()->with('success', 'Șters');
     }
+
+    public function show($id)
+    {
+    $employee = Employee::where('business_id', auth()->user()->business_id)
+        ->findOrFail($id);
+
+        $workingHours = \App\Models\EmployeeWorkingHour::where('employee_id', $id)->get();
+
+return view('employees.show', compact('employee', 'workingHours'));
+    }
+public function updateWorkingHours(Request $request, $id)
+
+{
+    $employee = Employee::where('business_id', auth()->user()->business_id)
+        ->findOrFail($id);
+
+    // Ștergem programul vechi
+    DB::table('employee_working_hours')
+        ->where('employee_id', $employee->id)
+        ->delete();
+
+    $days = $request->input('days', []);
+
+    foreach ($days as $day => $intervals) {
+        foreach ($intervals as $interval) {
+
+            if (!empty($interval['start']) && !empty($interval['end'])) {
+                DB::table('employee_working_hours')->insert([
+                    'employee_id' => $employee->id,
+                    'business_id' => auth()->user()->business_id,
+                    'day_of_week' => $day,
+                    'start_time' => $interval['start'],
+                    'end_time' => $interval['end'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    return redirect()->back()->with('success', 'Program salvat cu succes');
+}
+
 }
