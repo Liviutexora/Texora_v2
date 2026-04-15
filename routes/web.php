@@ -52,13 +52,10 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
 Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
 Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
-<<<<<<< Updated upstream
-=======
 Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('employees.show');
 Route::post('/employees/{id}/working-hours', [EmployeeController::class, 'updateWorkingHours'])
     ->name('employees.working-hours.update');
 Route::post('/business', [BusinessController::class, 'store'])->name('business.store');
->>>>>>> Stashed changes
 
 });
 
