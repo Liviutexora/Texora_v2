@@ -49,7 +49,8 @@ class EmployeeController extends Controller
     // DELETE
     public function destroy($id)
     {
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::where('business_id', auth()->user()->business_id)
+            ->findOrFail($id);
         $employee->delete();
 
         return redirect()->back()->with('success', 'Șters');
@@ -77,21 +78,21 @@ public function updateWorkingHours(Request $request, $id)
 
     $days = $request->input('days', []);
 
-    foreach ($days as $day => $intervals) {
-        foreach ($intervals as $interval) {
+  foreach ($days as $day => $data) {
 
-            if (!empty($interval['start']) && !empty($interval['end'])) {
-                DB::table('employee_working_hours')->insert([
-                    'employee_id' => $employee->id,
-                    'business_id' => auth()->user()->business_id,
-                    'day_of_week' => $day,
-                    'start_time' => $interval['start'],
-                    'end_time' => $interval['end'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
+    if (!empty($data['active']) && !empty($data['start']) && !empty($data['end'])) {
+        DB::table('employee_working_hours')->insert([
+            'employee_id' => $employee->id,
+            'business_id' => auth()->user()->business_id,
+            'day_of_week' => $day,
+            'start_time' => $data['start'],
+            'end_time' => $data['end'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+
     }
 
     return redirect()->back()->with('success', 'Program salvat cu succes');
