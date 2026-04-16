@@ -3,6 +3,16 @@
     subtitle="Activ"
 >
 
+    <div class="text-sm text-gray-500 mb-2">
+        <a href="{{ route('employees.index') }}" class="hover:text-gray-700">
+            Angajați
+        </a>
+        <span class="mx-1">/</span>
+        <span class="text-gray-700">
+            {{ $employee->first_name }} {{ $employee->last_name }}
+        </span>
+    </div>
+
     {{-- ACTION BUTTON --}}
     <x-slot:action>
         <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-medium">

@@ -67,19 +67,15 @@
                         <td class="p-2">{{ $employee->status }}</td>
                         <td class="p-2">
                             @foreach($employee->services as $s)
-                                <span class="text-sm bg-gray-200 px-2 py-1 rounded">
+                                <span class="text-sm bg-gray-200 px-3 py-1 rounded">
                                     {{ $s->name }}
                                 </span>
                             @endforeach
                         </td>
                         <td class="p-2">
-                            <form method="POST" action="{{ route('employees.destroy', $employee->id) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button class="bg-red-500 text-white px-2 py-1 rounded">
-                                    Șterge
-                                </button>
-                            </form>
+                            <a href="{{ route('employees.show', $employee->id) }}" class="bg-emerald-600 text-white px-2 py-1 rounded inline-block hover:bg-emerald-700">
+                                Profil
+                            </a>
                         </td>
                     </tr>
                 @endforeach
