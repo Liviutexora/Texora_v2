@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\Service;
+use App\Services\EmployeeWorkingHoursService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
+    protected $employeeWorkingHoursService;
+
+    public function __construct(EmployeeWorkingHoursService $employeeWorkingHoursService)
+    {
+        $this->employeeWorkingHoursService = $employeeWorkingHoursService;
+    }
+
     // LIST + FORM
     public function index()
     {
@@ -66,34 +74,11 @@ class EmployeeController extends Controller
 return view('employees.show', compact('employee', 'workingHours'));
     }
 public function updateWorkingHours(Request $request, $id)
-
 {
     $employee = Employee::where('business_id', auth()->user()->business_id)
         ->findOrFail($id);
 
-    // Ștergem programul vechi
-    DB::table('employee_working_hours')
-        ->where('employee_id', $employee->id)
-        ->delete();
-
-    $days = $request->input('days', []);
-
-  foreach ($days as $day => $data) {
-
-    if (!empty($data['active']) && !empty($data['start']) && !empty($data['end'])) {
-        DB::table('employee_working_hours')->insert([
-            'employee_id' => $employee->id,
-            'business_id' => auth()->user()->business_id,
-            'day_of_week' => $day,
-            'start_time' => $data['start'],
-            'end_time' => $data['end'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-
-    }
+    $this->employeeWorkingHoursService->update($employee, $request->days ?? []);
 
     return redirect()->back()->with('success', 'Program salvat cu succes');
 }

@@ -79,44 +79,53 @@
 
         @php
             $days = ['Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă','Duminică'];
-            $workingHoursByDay = $workingHours->keyBy('day_of_week');
+            $workingHoursByDay = $workingHours->groupBy('day_of_week');
         @endphp
 
         <div class="space-y-3">
             @foreach($days as $index => $day)
 
                 @php
-                    $wh = $workingHoursByDay[$index] ?? null;
+                    $intervals = $workingHoursByDay[$index] ?? collect();
                 @endphp
 
-                <div class="flex items-center justify-between border rounded-xl px-4 py-3">
+                <div class="border rounded-xl px-4 py-3">
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 mb-3">
                         <input type="checkbox"
                                name="days[{{ $index }}][active]"
-                               {{ $wh ? 'checked' : '' }}>
+                               {{ $intervals->count() ? 'checked' : '' }}>
 
                         <span class="font-medium">{{ $day }}</span>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="intervals flex flex-wrap items-center gap-2">
+                        @foreach($intervals as $i => $wh)
+                            <div class="interval-row flex items-center gap-2">
 
-                        <input type="time"
-                               name="days[{{ $index }}][start]"
-                               value="{{ $wh ? substr($wh->start_time, 0, 5) : '' }}"
-                               class="border rounded px-2 py-1"
-                               step="60"
-                               lang="ro">
+                                <input type="time"
+                                       name="days[{{ $index }}][{{ $i }}][start]"
+                                       value="{{ substr($wh->start_time, 0, 5) }}"
+                                       class="border rounded px-2 py-1"
+                                       step="60">
 
-                        <input type="time"
-                               name="days[{{ $index }}][end]"
-                               value="{{ $wh ? substr($wh->end_time, 0, 5) : '' }}"
-                               class="border rounded px-2 py-1"
-                               step="60"
-                               lang="ro">
+                                <input type="time"
+                                       name="days[{{ $index }}][{{ $i }}][end]"
+                                       value="{{ substr($wh->end_time, 0, 5) }}"
+                                       class="border rounded px-2 py-1"
+                                       step="60">
 
-                        <button type="button" class="text-blue-600 text-lg">+</button>
+                                <button type="button" class="remove-interval text-red-500 bg-red-100 hover:bg-red-200 rounded-full w-7 h-7 flex items-center justify-center">✕</button>
+
+                            </div>
+                        @endforeach
                     </div>
+
+                    <button type="button"
+                            class="add-interval text-blue-600 text-lg"
+                            data-day="{{ $index }}">
+                        +
+                    </button>
 
                 </div>
             @endforeach
@@ -156,6 +165,48 @@
 
                 document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
             });
+        });
+    </script>
+
+    {{-- ADD INTERVAL SCRIPT --}}
+    <script>
+        document.querySelectorAll('.add-interval').forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const day = this.dataset.day;
+
+                const parent = this.closest('div.border.rounded-xl');
+                const container = parent.querySelector('.intervals');
+
+                const index = container.children.length;
+
+                const row = document.createElement('div');
+                row.classList.add('interval-row', 'flex', 'items-center', 'gap-2');
+
+                row.innerHTML = `
+                    <input type="time" name="days[${day}][${index}][start]" class="border rounded px-2 py-1" step="60">
+                    <input type="time" name="days[${day}][${index}][end]" class="border rounded px-2 py-1" step="60">
+                    <button type="button" class="remove-interval text-red-500 bg-red-100 hover:bg-red-200 rounded-full w-7 h-7 flex items-center justify-center">✕</button>
+                `;
+
+                container.appendChild(row);
+            });
+
+        });
+    </script>
+
+    <script>
+        document.addEventListener('click', function (event) {
+            const button = event.target.closest('.remove-interval');
+            if (!button) {
+                return;
+            }
+
+            const row = button.closest('.interval-row');
+            if (row) {
+                row.remove();
+            }
         });
     </script>
 

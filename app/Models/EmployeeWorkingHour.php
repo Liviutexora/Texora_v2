@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class EmployeeWorkingHour extends Model
 {
     protected $fillable = [
+        'business_id',
         'employee_id',
         'day_of_week',
         'start_time',
