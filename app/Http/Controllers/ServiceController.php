@@ -7,27 +7,40 @@ use App\Models\Service;
 
 class ServiceController extends Controller
 {
+    public function update(Request $request, $id)
+    {
+        $service = Service::where('business_id', auth()->user()->business_id)
+            ->findOrFail($id);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'duration' => 'required|integer',
+            'price' => 'nullable|numeric',
+        ]);
+
+        $service->update($data);
+
+        return redirect()->back()->with('success', 'Serviciu actualizat');
+    }
     public function index()
     {
-        $services = Service::where('business_id', auth()->user()->business_id)->get();
+        $services = Service::all();
 
         return view('services.index', compact('services'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+
+        $data = $request->validate([
             'name' => 'required|string|max:255',
             'duration' => 'required|integer',
             'price' => 'nullable|numeric',
         ]);
 
-        Service::create([
-            'name' => $request->name,
-            'duration' => $request->duration,
-            'price' => $request->price,
-            'business_id' => auth()->user()->business_id,
-        ]);
+        $data['business_id'] = auth()->user()->business_id;
+
+        Service::create($data);
 
         return redirect()->back()->with('success', 'Serviciu adăugat');
     }

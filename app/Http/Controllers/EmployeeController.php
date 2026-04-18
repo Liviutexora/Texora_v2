@@ -22,13 +22,9 @@ class EmployeeController extends Controller
     // LIST + FORM
     public function index()
     {
-        $businessId = Auth::user()->business_id;
+        $employees = Employee::with('services')->get();
 
-        $employees = Employee::where('business_id', $businessId)
-            ->with('services')
-            ->get();
-
-        $services = Service::where('business_id', $businessId)->get();
+        $services = Service::all();
 
         return view('employees.index', compact('employees', 'services'));
     }
@@ -36,20 +32,34 @@ class EmployeeController extends Controller
     // STORE
     public function store(Request $request)
     {
-        $businessId = Auth::user()->business_id;
-
-        $employee = Employee::create([
-            'business_id' => $businessId,
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'phone' => $request->phone,
-            'email' => $request->email,
-            'status' => $request->status ?? 'active',
+        $data = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'status' => 'nullable|in:active,inactive',
+            'services' => 'nullable|array',
+            'services.*' => [
+                'exists:services,id',
+                function ($attribute, $value, $fail) {
+                    if (!\App\Models\Service::where('id', $value)
+                        ->where('business_id', auth()->user()->business_id)
+                        ->exists()) {
+                        $fail('Serviciu invalid pentru acest business.');
+                    }
+                }
+            ],
         ]);
 
-        // atașare servicii
-        if ($request->has('services')) {
-            $employee->services()->sync($request->services);
+        $data['business_id'] = auth()->user()->business_id;
+
+        $employee = Employee::create($data);
+
+        if (!empty($data['services'])) {
+            $employee->services()->syncWithPivotValues(
+                $data['services'],
+                ['business_id' => auth()->user()->business_id]
+            );
         }
 
         return redirect()->back()->with('success', 'Profesionist adăugat');
@@ -70,9 +80,8 @@ class EmployeeController extends Controller
         $employee = Employee::where('business_id', auth()->user()->business_id)
             ->findOrFail($id);
 
-        $workingHours = \App\Models\EmployeeWorkingHour::where('employee_id', $id)
-            ->where('business_id', auth()->user()->business_id)
-            ->get();
+
+        $workingHours = $employee->workingHours;
 
         return view('employees.show', compact('employee', 'workingHours'));
     }

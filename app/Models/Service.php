@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope('business', function ($query) {
+            if (auth()->check()) {
+                $query->where('services.business_id', auth()->user()->business_id);
+            }
+        });
+    }
+
     protected $fillable = [
         'business_id',
         'name',
@@ -13,9 +22,11 @@ class Service extends Model
         'price',
     ];
 
-    // Relație cu angajați (many-to-many)
     public function employees()
     {
-        return $this->belongsToMany(Employee::class);
+        return $this->belongsToMany(Employee::class)
+            ->when(auth()->check(), function ($query) {
+                $query->wherePivot('business_id', auth()->user()->business_id);
+            });
     }
 }

@@ -6,17 +6,46 @@ use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+    ];
+    protected static function booted()
+    {
+        static::addGlobalScope('business', function ($query) {
+            if (auth()->check()) {
+                $query->where('business_id', auth()->user()->business_id);
+            }
+        });
+    }
+
     protected $fillable = [
-        'client_name',
-        'service',
-        'appointment_time',
-        'notes',
         'business_id',
+        'employee_id',
+        'client_id',
+        'service_id',
+        'start_time',
+        'end_time',
+        'notes',
     ];
 
-    // relație cu business (pentru viitor)
     public function business()
     {
         return $this->belongsTo(Business::class);
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
     }
 }

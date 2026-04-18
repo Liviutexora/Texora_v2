@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmployeeWorkingHour extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope('business', function ($query) {
+            if (auth()->check()) {
+                $query->where('business_id', auth()->user()->business_id);
+            }
+        });
+    }
     protected $fillable = [
         'business_id',
         'employee_id',
