@@ -6,6 +6,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\BusinessController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,7 +27,7 @@ require __DIR__.'/auth.php';
 
 
 Route::get('/reminders', function () {
-    return view('reminders');
+    return view('placeholder');
 })->middleware(['auth'])->name('reminders');
 
 Route::get('/appointments', [AppointmentController::class, 'index'])
@@ -53,13 +54,13 @@ Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.
 Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
 Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('employees.show');
+Route::get('/employees/{employee}/services', [EmployeeController::class, 'services']);
 Route::post('/employees/{id}/working-hours', [EmployeeController::class, 'updateWorkingHours'])
     ->name('employees.working-hours.update');
 Route::post('/business', [BusinessController::class, 'store'])->name('business.store');
 
 });
 
-Route::view('/reminders', 'placeholder')->name('reminders');
 Route::view('/calendar', 'placeholder')->name('calendar.index');
 
 Route::get('/slots', [AppointmentController::class, 'getSlots']);

@@ -96,7 +96,15 @@ public function updateWorkingHours(UpdateEmployeeWorkingHoursRequest $request, $
         return redirect()->back()->with('warning', 'Unele intervale au fost ignorate deoarece sunt invalide sau se suprapun.');
     }
 
+
     return redirect()->back()->with('success', 'Programul de lucru a fost salvat cu succes.');
 }
 
+    public function services($employeeId)
+    {
+        $employee = \App\Models\Employee::findOrFail($employeeId);
+        return response()->json($employee->services);
+    }
 }
+
+

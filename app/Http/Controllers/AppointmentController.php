@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+
 use Illuminate\Http\Request;
 use App\Services\AppointmentService;
 use Illuminate\Validation\Rule;
@@ -42,18 +44,38 @@ class AppointmentController extends Controller
                 Rule::exists('services', 'id')
                     ->where('business_id', auth()->user()->business_id),
             ],
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
+            'date' => 'required|date',
+            'start_time' => 'required',
             'notes' => 'nullable|string',
         ]);
 
+        $service = \App\Models\Service::findOrFail($data['service_id']);
+        // build full datetime
+        $start = Carbon::parse($data['date'] . ' ' . $data['start_time']);
+        // calculate end time
+        $end = (clone $start)->addMinutes($service->duration);
+        // override values
+        $data['start_time'] = $start;
+        $data['end_time'] = $end;
+
         $data['business_id'] = auth()->user()->business_id;
 
+
+
+        if (strlen($data['start_time']) <= 5) {
+            $data['start_time'] = \Carbon\Carbon::parse($data['date'] . ' ' . $data['start_time']);
+        } else {
+            $data['start_time'] = \Carbon\Carbon::parse($data['start_time']);
+        }
+
+        unset($data['end_time']);
+
+
         try {
-            $this->appointmentService->create($data);
+            $this->appointmentService->createAppointmentSafely($data);
             return redirect()->back()->with('success', 'Programare creată cu succes');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Slotul nu mai este disponibil. Te rugăm să alegi alt interval.');
+            dd($e->getMessage());
         }
 
     }
@@ -89,8 +111,7 @@ class AppointmentController extends Controller
                 Rule::exists('services', 'id')
                     ->where('business_id', auth()->user()->business_id),
             ],
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
+            'start_time' => 'required',
             'notes' => 'nullable|string',
         ]);
 

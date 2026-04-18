@@ -11,9 +11,73 @@ use Illuminate\Support\Facades\DB;
 
 class AppointmentService
 {
+    private function validateNotInPast(array $data): void
+    {
+        $start = $data['start_time'] instanceof Carbon
+            ? $data['start_time']
+            : Carbon::parse($data['date'] . ' ' . $data['start_time']);
+        if ($start->isPast()) {
+            throw new \Exception('Nu poți crea programări în trecut.');
+        }
+    }
+
+    private function validateEmployeeService(array $data): void
+    {
+        $employee = \App\Models\Employee::find($data['employee_id']);
+        if (!$employee) {
+            throw new \Exception('Angajatul nu există.');
+        }
+        $hasService = $employee->services()
+            ->where('services.id', $data['service_id'])
+            ->exists();
+        if (!$hasService) {
+            throw new \Exception('Angajatul nu oferă acest serviciu.');
+        }
+    }
+
+    private function validateWorkingHours(array $data): void
+    {
+        $employeeId = $data['employee_id'];
+        $service = \App\Models\Service::findOrFail($data['service_id']);
+
+        $start = $data['start_time'] instanceof Carbon
+            ? $data['start_time']
+            : Carbon::parse($data['date'] . ' ' . $data['start_time']);
+        $end = $start->copy()->addMinutes($service->duration);
+
+        $dayOfWeek = $start->dayOfWeek;
+        $businessId = auth()->user()->business_id;
+
+        $workingHours = \App\Models\EmployeeWorkingHour::where('business_id', $businessId)
+            ->where('employee_id', $employeeId)
+            ->where('day_of_week', $dayOfWeek)
+            ->first();
+
+        if (!$workingHours) {
+            throw new \Exception('Angajatul nu lucrează în această zi.');
+        }
+
+        $workStart = \Carbon\Carbon::parse($data['date'] . ' ' . $workingHours->start_time);
+        $workEnd = \Carbon\Carbon::parse($data['date'] . ' ' . $workingHours->end_time);
+
+        if ($start < $workStart || $end > $workEnd) {
+            throw new \Exception('Programarea este în afara programului de lucru.');
+        }
+    }
     public function createAppointmentSafely(array $data)
     {
         return DB::transaction(function () use ($data) {
+            $this->validateNotInPast($data);
+            $this->validateEmployeeService($data);
+            $this->validateWorkingHours($data);
+
+            if (!$data['start_time'] instanceof \Carbon\Carbon) {
+                $data['start_time'] = \Carbon\Carbon::parse($data['start_time']);
+            }
+
+            $service = Service::findOrFail($data['service_id']);
+            $data['end_time'] = (clone $data['start_time'])->addMinutes($service->duration);
+
             $businessId = auth()->user()->business_id;
             DB::table('appointments')
                 ->where('business_id', $businessId)
@@ -33,27 +97,24 @@ class AppointmentService
                 throw new \Exception('Slot is no longer available');
             }
 
-            $service = Service::findOrFail($data['service_id']);
-
-            $start = Carbon::parse($data['date'] . ' ' . $data['start_time']);
-            $end = $start->copy()->addMinutes($service->duration);
-
             return Appointment::create([
                 'business_id' => auth()->user()->business_id,
                 'employee_id' => $data['employee_id'],
                 'client_id' => $data['client_id'],
                 'service_id' => $data['service_id'],
-                'start_time' => $start,
-                'end_time' => $end,
+                'start_time' => $data['start_time'],
+                'end_time' => $data['end_time'],
             ]);
         });
     }
 
-    public function isSlotAvailable(int $employeeId, string $date, string $startTime, int $serviceId): bool
+    public function isSlotAvailable(int $employeeId, string $date, $startTime, int $serviceId): bool
     {
         $service = Service::findOrFail($serviceId);
 
-        $start = Carbon::parse($date . ' ' . $startTime);
+        $start = $startTime instanceof Carbon
+            ? $startTime
+            : Carbon::parse($date . ' ' . $startTime);
         $end = $start->copy()->addMinutes($service->duration);
 
         $businessId = auth()->user()->business_id;
@@ -117,7 +178,8 @@ class AppointmentService
 
     public function getAll()
     {
-        return \App\Models\Appointment::where('business_id', auth()->user()->business_id)
+        return \App\Models\Appointment::with(['client', 'service'])
+            ->where('business_id', auth()->user()->business_id)
             ->latest()
             ->get();
     }
