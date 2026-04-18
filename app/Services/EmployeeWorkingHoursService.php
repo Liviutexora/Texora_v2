@@ -10,15 +10,19 @@ class EmployeeWorkingHoursService
     {
         EmployeeWorkingHour::where('employee_id', $employee->id)->delete();
 
+        $hasWarnings = false;
+
         foreach ($days as $dayIndex => $intervals) {
             $validIntervals = [];
 
             foreach ($intervals as $interval) {
                 if (empty($interval['start']) || empty($interval['end'])) {
+                    $hasWarnings = true;
                     continue;
                 }
 
                 if ($interval['start'] >= $interval['end']) {
+                    $hasWarnings = true;
                     continue;
                 }
 
@@ -36,6 +40,7 @@ class EmployeeWorkingHoursService
 
             foreach ($validIntervals as $interval) {
                 if ($previousEnd !== null && $interval['start'] < $previousEnd) {
+                    $hasWarnings = true;
                     continue;
                 }
 
@@ -50,5 +55,10 @@ class EmployeeWorkingHoursService
                 $previousEnd = $interval['end'];
             }
         }
+
+        return [
+            'saved' => true,
+            'has_warnings' => $hasWarnings,
+        ];
     }
 }

@@ -3,6 +3,18 @@
     subtitle="Activ"
 >
 
+    @if(session('success'))
+        <div class="bg-green-100 text-green-800 p-3 rounded mb-4">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="bg-green-100 text-green-800 p-3 rounded mb-4">
+            {{ session('warning') }}
+        </div>
+    @endif
+
     <div class="text-sm text-gray-500 mb-2">
         <a href="{{ route('employees.index') }}" class="hover:text-gray-700">
             Angajați

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\Service;
 use App\Services\EmployeeWorkingHoursService;
+use App\Http\Requests\UpdateEmployeeWorkingHoursRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -66,21 +67,27 @@ class EmployeeController extends Controller
 
     public function show($id)
     {
-    $employee = Employee::where('business_id', auth()->user()->business_id)
-        ->findOrFail($id);
+        $employee = Employee::where('business_id', auth()->user()->business_id)
+            ->findOrFail($id);
 
-        $workingHours = \App\Models\EmployeeWorkingHour::where('employee_id', $id)->get();
+        $workingHours = \App\Models\EmployeeWorkingHour::where('employee_id', $id)
+            ->where('business_id', auth()->user()->business_id)
+            ->get();
 
-return view('employees.show', compact('employee', 'workingHours'));
+        return view('employees.show', compact('employee', 'workingHours'));
     }
-public function updateWorkingHours(Request $request, $id)
+public function updateWorkingHours(UpdateEmployeeWorkingHoursRequest $request, $id)
 {
     $employee = Employee::where('business_id', auth()->user()->business_id)
         ->findOrFail($id);
 
-    $this->employeeWorkingHoursService->update($employee, $request->days ?? []);
+    $result = $this->employeeWorkingHoursService->update($employee, $request->validated()['days'] ?? []);
 
-    return redirect()->back()->with('success', 'Program salvat cu succes');
+    if (!empty($result['has_warnings'])) {
+        return redirect()->back()->with('warning', 'Unele intervale au fost ignorate deoarece sunt invalide sau se suprapun.');
+    }
+
+    return redirect()->back()->with('success', 'Programul de lucru a fost salvat cu succes.');
 }
 
 }
